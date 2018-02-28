@@ -1,5 +1,5 @@
 all:
-	gcc main.c brick.c -lSOIL -lglut32 -lopengl32 -lglu32 -lm -o beadando.exe
+	gcc main.c camera.c draw.c -lSOIL -lglut32 -lopengl32 -lglu32 -lm -o beadando.exe
 
 linux:
-	gcc main.c brick.c -lglut -lGL -lSOIL -lGLU -o beadando
+	gcc main.c camera.c draw.c -lglut -lGL -lSOIL -lGLU -o beadando
