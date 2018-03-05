@@ -1,18 +1,26 @@
 #include "camera.h"
 #include "draw.h"
+#include "model.h"
 
+#include "math.h"
+#include <stdlib.h>
 #include <GL/glut.h>
 #include <SOIL/SOIL.h>
 
 #define VIEWPORT_RATIO (4.0 / 3.0)
 #define VIEWPORT_ASPECT 50.0
 
-#define CAMERA_SPEED 2.0
+
+
+double CAMERA_SPEED = 2.0;
 
 double rotateX;
 double rotateY;
 
 int mouseX, mouseY;
+
+double treeCords[100][3];
+const int TREE_PIECE = 100;
 
 struct Camera camera;
 
@@ -24,18 +32,60 @@ struct Action
     int moveRight;
     int moveUp;
     int moveDown;
+    int speedUp;
 };
 
 struct Action action;
-int time;
+int times;
+
+struct World world;
+
+typedef GLubyte Pixel;
+
+GLuint loadTexture(const char* filename) {
+
+    GLuint textureName;
+    Pixel* image;
+    glGenTextures(1, &textureName);
+
+    int width;
+    int height;
+
+    image = (Pixel*)SOIL_load_image(filename, &width, &height, 0, SOIL_LOAD_RGBA);
+
+    glBindTexture(GL_TEXTURE_2D, textureName);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (Pixel*)image);
+
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
+    return textureName;
+}
+
+void initializeTexture() {
+    unsigned int i;
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+    world.ground = loadTexture("textures/grass.png");
+    world.tree.trunkTexture = loadTexture("textures/trunk.png");
+    world.tree.leafTexture = loadTexture("textures/leafProba2.png");
+    world.skybox.texture = loadTexture("textures/skybox.png");
+
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+
+//    glEnable(GL_TEXTURE_2D);
+}
 
 double calcElapsedTime(){
     int currentTime;
     double elapsedTime;
 
     currentTime = glutGet(GLUT_ELAPSED_TIME);
-    elapsedTime = (double)(currentTime - time) / 1000.0;
-    time = currentTime;
+    elapsedTime = (double)(currentTime - times) / 1000.0;
+    times = currentTime;
 
     return elapsedTime;
 }
@@ -64,9 +114,17 @@ void updateCameraPosition(struct Camera* camera, double elapsedTime){
     if(action.moveUp == TRUE) {
         moveUp(camera, distance);
     }
+
     if (action.moveDown == TRUE) {
         moveDown(camera, distance);
     }
+
+    if(action.speedUp == TRUE) {
+        CAMERA_SPEED = 6.0;
+    } else {
+        CAMERA_SPEED = 2.0;
+    }
+
 }
 
 void display(){
@@ -82,11 +140,17 @@ void display(){
 
     glPushMatrix();
 
-    drawGround();
-    drawTree(3.0, 3.0, 4.0);
-    drawTree(0.0, 0.0, 3.0);
 
-    glPopMatrix();      // ??
+    drawGround(world.ground);
+
+    int i;
+    for (i = 0; i < TREE_PIECE; i++){
+            drawTree(treeCords[i][0], treeCords[i][1], treeCords[i][2], world.tree);
+    }
+
+    drawSkybox(world.skybox.texture);
+
+    glPopMatrix();
 
     glutSwapBuffers();
 }
@@ -151,11 +215,14 @@ void keyHandler(unsigned char key, int x, int y) {
         case 'd':
             action.moveRight = TRUE;
             break;
-        case 'e':
+        case 32:        // SPACE
             action.moveUp = TRUE;
             break;
-        case 'q':
+        case 'c':
             action.moveDown = TRUE;
+            break;
+        case 9:
+            action.speedUp = TRUE;
             break;
     }
     glutPostRedisplay();
@@ -175,11 +242,14 @@ void keyUpHandler(unsigned char key, int x, int y) {
         case 'd':
             action.moveRight = FALSE;
             break;
-        case 'e':
+        case 32:
             action.moveUp = FALSE;
             break;
-        case 'q':
+        case 'c':
             action.moveDown = FALSE;
+            break;
+        case 9:
+            action.speedUp = FALSE;
             break;
     }
     glutPostRedisplay();
@@ -204,6 +274,9 @@ void initialize() {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_COLOR_MATERIAL);
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     glClearDepth(1.0);
 
     glEnable(GL_TEXTURE_2D);
@@ -211,8 +284,43 @@ void initialize() {
     initializeTexture();
 }
 
+void initTreeCoords(){
+    int i, good, wrong;
+    time_t t;
+
+    srand((unsigned) time(&t));
+
+    treeCords[0][0] = (double)(rand() % 100) - 50;
+    treeCords[0][1] = (double)(rand() % 100) - 50;
+    treeCords[0][2] = (double)(rand() % 4) + 3;
+
+    for( i = 1 ; i < TREE_PIECE; i++ ) {
+        good = 0;
+        while (good != 1) {
+            wrong = 0;
+            int j = 0;
+
+            treeCords[i][0] = (double) (rand() % 100) - 50;
+            treeCords[i][1] = (double) (rand() % 100) - 50;
+            while (j < i && wrong != 1) {
+                if ((fabs(treeCords[j][0] - treeCords[i][0]) < 4) && (fabs(treeCords[j][1] - treeCords[i][1]) < 4)) {
+                    wrong = 1;
+                } else {
+                    j++;
+                }
+            }
+            if (j == i) {
+                good = 1;
+            }
+        };
+        treeCords[i][2] = (double) (rand() % 4) + 3;
+    }
+}
+
 
 int main(int argc, char* argv[]) {
+
+    initTreeCoords();
 
     glutInit(&argc, argv);
 
@@ -239,6 +347,7 @@ int main(int argc, char* argv[]) {
     action.moveRight = FALSE;
     action.moveUp = FALSE;
     action.moveDown = FALSE;
+    action.speedUp = FALSE;
 
     glutMainLoop();
 
