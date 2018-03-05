@@ -57,4 +57,25 @@ struct Model
     struct Triangle* triangles;
     struct Quad* quads;
 };
+
+typedef struct {
+    int front, back, left, right, top, texture;
+}Skybox;
+
+typedef struct {
+//    Model model;
+    int leafTexture, trunkTexture;
+//    float material_ambient[4];
+}Tree;
+
+struct World{
+    int ground;
+    Skybox skybox;
+    int skyTexture;
+    Tree tree;
+
+    float ambient[4];
+    float material_ambient[4];
+    float diffuse_light_emission[4];
+};
 #endif //BEADANDO_MODEL_H
