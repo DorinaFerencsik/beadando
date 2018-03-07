@@ -67,13 +67,53 @@ GLuint loadTexture(const char* filename) {
 
 void initializeTexture() {
     unsigned int i;
+    time_t t;
+    int dayTime;
+    srand((unsigned) time(&t));
+
+//    for (i=0; i<20; i++){
+        dayTime = (int)(rand() % 3);
+        printf("Daytime number: %f", dayTime);
+//    }
+//    treeCords[0][0] = (double)(rand() % dRange) - range;
+
+
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     world.ground = loadTexture("textures/grass.png");
     world.tree.trunkTexture = loadTexture("textures/trunk.png");
-    world.tree.leafTexture = loadTexture("textures/leafProba2.png");
-    world.skybox.texture = loadTexture("textures/skybox.png");
+    world.tree.leafTexture = loadTexture("textures/leaf.png");
 
+    switch(dayTime) {
+        case 0:
+            world.skybox.back = loadTexture("textures/skybox/nightbox3_back.png");
+            world.skybox.front = loadTexture("textures/skybox/nightbox3_front.png");
+            world.skybox.left = loadTexture("textures/skybox/nightbox3_left.png");
+            world.skybox.right = loadTexture("textures/skybox/nightbox3_right.png");
+            world.skybox.top = loadTexture("textures/skybox/nightbox3_top.png");
+            break;
+        case 1:
+            world.skybox.back = loadTexture("textures/skybox/skybox1_back.png");
+            world.skybox.front = loadTexture("textures/skybox/skybox1_front.png");
+            world.skybox.left = loadTexture("textures/skybox/skybox1_left.png");
+            world.skybox.right = loadTexture("textures/skybox/skybox1_right.png");
+            world.skybox.top = loadTexture("textures/skybox/skybox1_top.png");
+            break;
+        case 2:
+            world.skybox.back = loadTexture("textures/skybox/skybox2_back.png");
+            world.skybox.front = loadTexture("textures/skybox/skybox2_front.png");
+            world.skybox.left = loadTexture("textures/skybox/skybox2_left.png");
+            world.skybox.right = loadTexture("textures/skybox/skybox2_right.png");
+            world.skybox.top = loadTexture("textures/skybox/skybox2_top.png");
+            break;
+        default:
+            world.skybox.back = loadTexture("textures/skybox/skybox2_back.png");
+            world.skybox.front = loadTexture("textures/skybox/skybox2_front.png");
+            world.skybox.left = loadTexture("textures/skybox/skybox2_left.png");
+            world.skybox.right = loadTexture("textures/skybox/skybox2_right.png");
+            world.skybox.top = loadTexture("textures/skybox/skybox2_top.png");
+            break;
+    }
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
 
 //    glEnable(GL_TEXTURE_2D);
@@ -148,7 +188,7 @@ void display(){
             drawTree(treeCords[i][0], treeCords[i][1], treeCords[i][2], world.tree);
     }
 
-    drawSkybox(world.skybox.texture);
+    drawSkybox(world.skybox);
 
     glPopMatrix();
 
@@ -286,12 +326,14 @@ void initialize() {
 
 void initTreeCoords(){
     int i, good, wrong;
+    int range = SKYBOX_WIDHT-3;
+    int dRange = 2*SKYBOX_WIDHT-6;
     time_t t;
 
     srand((unsigned) time(&t));
 
-    treeCords[0][0] = (double)(rand() % 100) - 50;
-    treeCords[0][1] = (double)(rand() % 100) - 50;
+    treeCords[0][0] = (double)(rand() % dRange) - range;
+    treeCords[0][1] = (double)(rand() % dRange) - range;
     treeCords[0][2] = (double)(rand() % 4) + 3;
 
     for( i = 1 ; i < TREE_PIECE; i++ ) {
@@ -300,8 +342,8 @@ void initTreeCoords(){
             wrong = 0;
             int j = 0;
 
-            treeCords[i][0] = (double) (rand() % 100) - 50;
-            treeCords[i][1] = (double) (rand() % 100) - 50;
+            treeCords[i][0] = (double) (rand() % dRange) - range;
+            treeCords[i][1] = (double) (rand() % dRange) - range;
             while (j < i && wrong != 1) {
                 if ((fabs(treeCords[j][0] - treeCords[i][0]) < 4) && (fabs(treeCords[j][1] - treeCords[i][1]) < 4)) {
                     wrong = 1;

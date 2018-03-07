@@ -3,45 +3,12 @@
 #include <GL/glut.h>
 #include <SOIL/SOIL.h>
 
-//typedef GLubyte Pixel[3];
-
-//struct World {
-//    int ground;
-//    int tree;
-//} World;
-
-
-
-//void initializeTexture(struct World world) {
-//    unsigned int i;
-//    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-//
-////    char textureFilenames[][32] = {
-////            "textures/grass.png",
-////            "textures/trunk.png",
-////            "textures/leaf.png"
-////    };
-////
-////    for (i=0; i<3;i++){
-////        textureNames[i] = loadTexture(textureFilenames[i], images[i]);
-////    }
-//    printf("its initTexture..");
-//    world->ground = loadTexture("textures/grass.png");
-//    world->tree.trunkTexture = loadTexture("textures/trunk.png");
-//    world->tree.leafTexture = loadTexture("textures/leaf.png");
-//
-////    printf("World.grount %d", &world->ground);
-//    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-//
-//    glEnable(GL_TEXTURE_2D);
-//}
-
 void drawBlock(double x, double y, double z, int texture) {
-//    printf("Its drawBlock");
 
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_EXT_CLAMP_TO_EDGE);
 
+    //// BOTTOM
     glBegin(GL_QUADS);
     glTexCoord2f(0.0,0.0);          // 0 0
     glVertex3d(x, y, z);
@@ -57,7 +24,7 @@ void drawBlock(double x, double y, double z, int texture) {
     glEnd();
     //end of first texture
 
-    //Second texture, to left
+    //// BACK
     glBegin(GL_QUADS);
     glTexCoord2f(0.0, 0.0);         // 0 0
     glVertex3d(x, y, z);
@@ -73,7 +40,7 @@ void drawBlock(double x, double y, double z, int texture) {
     glEnd();
     //end of second texture
 
-    //Third texture, to right
+    //// LEFT
     glBegin(GL_QUADS);
     glTexCoord2s(0.0, 0.0);         // 0 0
     glVertex3d(x, y, z);
@@ -89,6 +56,7 @@ void drawBlock(double x, double y, double z, int texture) {
     glEnd();
     //end of third texture
 
+    //// RIGHT
     glBegin(GL_QUADS);
     glTexCoord2s(0.0, 0.0);         // 0 0
     glVertex3d(x+1, y, z);
@@ -103,6 +71,7 @@ void drawBlock(double x, double y, double z, int texture) {
     glVertex3d(x+1, y+1, z);
     glEnd();
 
+    //// FRONT
     glBegin(GL_QUADS);
     glTexCoord2s(0.0, 0.0);         // 0 0
     glVertex3d(x, y+1, z);
@@ -136,8 +105,6 @@ void drawBlock(double x, double y, double z, int texture) {
 void drawTree(double positionX, double positionY, double trunkHeight, Tree tree){
     double z;
 
-
-
     //leaf bottom
     drawBlock(positionX-2, positionY, trunkHeight, tree.leafTexture);
     drawBlock(positionX-1, positionY+1, trunkHeight, tree.leafTexture);
@@ -151,7 +118,6 @@ void drawTree(double positionX, double positionY, double trunkHeight, Tree tree)
     drawBlock(positionX+1, positionY, trunkHeight, tree.leafTexture);
     drawBlock(positionX+1, positionY-1, trunkHeight, tree.leafTexture);
     drawBlock(positionX+2, positionY, trunkHeight, tree.leafTexture);
-
 
     //leaf middle
     drawBlock(positionX-1, positionY, trunkHeight+1, tree.leafTexture);
@@ -170,64 +136,121 @@ void drawTree(double positionX, double positionY, double trunkHeight, Tree tree)
 }
 
 void drawGround(int texture) {
-//    printf("Its drawGround");
-//    glBindTexture(GL_TEXTURE_2D, texture);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    double x, y;
+    double x, y, z;
 
-    for (x=-50.0; x<50.0; x += 1.0){
-        for (y=-50.0; y<50.0; y += 1.0){
-            drawBlock(x, y, 0.0, texture);
+        for (x = -SKYBOX_WIDHT; x < SKYBOX_WIDHT; x++) {
+            for (y = -SKYBOX_WIDHT; y < SKYBOX_WIDHT; y++) {
+                drawBlock(x, y, 0.0, texture);
+            }
         }
-    }
 }
 
-void drawSkybox(int texture) {
-    double theta, phi1, phi2;
-    double x1, y1, z1;
-    double x2, y2, z2;
-    double u, v1, v2;
+void drawSkyboxBack(int texture) {
 
-    int n_slices, n_stacks;
-    double radius;
-    int i, k;
-
-    n_slices = 12;
-    n_stacks = 6;
-    radius = 50;
-
-    glPushMatrix();
-
-    glScaled(radius, radius, radius);
-
-    glColor3f(1, 1, 1);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glBegin(GL_TRIANGLE_STRIP);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_EXT_CLAMP_TO_EDGE);
 
-    for (i = 0; i < n_stacks; ++i) {
-        v1 = (double)i / n_stacks;
-        v2 = (double)(i + 1) / n_stacks;
-        phi1 = v1 * M_PI / 2.0;
-        phi2 = v2 * M_PI / 2.0;
-        for (k = 0; k <= n_slices; ++k) {
-            u = (double)k / n_slices;
-            theta = u * 2.0 * M_PI;
-            x1 = cos(theta) * cos(phi1);
-            y1 = sin(theta) * cos(phi1);
-            z1 = sin(phi1);
-            x2 = cos(theta) * cos(phi2);
-            y2 = sin(theta) * cos(phi2);
-            z2 = sin(phi2);
-            glTexCoord2d(u, 1.0 - v1);
-            glVertex3d(x1, y1, z1);
-            glTexCoord2d(u, 1.0 - v2);
-            glVertex3d(x2, y2, z2);
-        }
-    }
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0, 0.0);         // 0 0
+    glVertex3d(-SKYBOX_WIDHT, -SKYBOX_WIDHT, GROUND_LEVEL);
 
+    glTexCoord2f(0.0, 1.0);         // 0 1
+    glVertex3d(-SKYBOX_WIDHT, -SKYBOX_WIDHT, SKYBOX_HEIGHT);
+
+    glTexCoord2f(1.0, 1.0);         // 1 1
+    glVertex3d(SKYBOX_WIDHT, -SKYBOX_WIDHT, SKYBOX_HEIGHT);
+
+    glTexCoord2f(1.0, 0.0);         // 1 0
+    glVertex3d(SKYBOX_WIDHT, -SKYBOX_WIDHT, GROUND_LEVEL);
     glEnd();
+}
 
-    glPopMatrix();
+void drawSkyboxFront(int texture) {
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_EXT_CLAMP_TO_EDGE);
+
+    glBegin(GL_QUADS);
+    glTexCoord2s(0.0, 0.0);         // 0 0
+    glVertex3d(-SKYBOX_WIDHT, SKYBOX_WIDHT, GROUND_LEVEL);
+
+    glTexCoord2s(0.0, 1.0);         // 0 1
+    glVertex3d(-SKYBOX_WIDHT, SKYBOX_WIDHT, SKYBOX_HEIGHT);
+
+    glTexCoord2s(1.0, 1.0);         // 1 1
+    glVertex3d(SKYBOX_WIDHT, SKYBOX_WIDHT, SKYBOX_HEIGHT);
+
+    glTexCoord2s(1.0, 0.0);         // 1 0
+    glVertex3d(SKYBOX_WIDHT, SKYBOX_WIDHT, GROUND_LEVEL);
+    glEnd();
+}
+
+void drawSkyboxLeft(int texture) {
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_EXT_CLAMP_TO_EDGE);
+
+    glBegin(GL_QUADS);
+    glTexCoord2s(0.0, 0.0);         // 0 0
+    glVertex3d(-SKYBOX_WIDHT, -SKYBOX_WIDHT, GROUND_LEVEL);
+
+    glTexCoord2s(0.0, 1.0);         // 0 1
+    glVertex3d(-SKYBOX_WIDHT, -SKYBOX_WIDHT, SKYBOX_HEIGHT);
+
+    glTexCoord2s(1.0, 1.0);         // 1 1
+    glVertex3d(-SKYBOX_WIDHT, SKYBOX_WIDHT, SKYBOX_HEIGHT);
+
+    glTexCoord2s(1.0, 0.0);         // 1 0
+    glVertex3d(-SKYBOX_WIDHT, SKYBOX_WIDHT, GROUND_LEVEL);
+    glEnd();
+}
+
+void drawSkyboxRight(int texture) {
+
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_EXT_CLAMP_TO_EDGE);
+
+    //Second texture, to left
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0, 0.0);         // 0 0
+    glVertex3d(SKYBOX_WIDHT, -SKYBOX_WIDHT, GROUND_LEVEL);
+
+    glTexCoord2f(0.0, 1.0);         // 0 1
+    glVertex3d(SKYBOX_WIDHT, -SKYBOX_WIDHT, SKYBOX_HEIGHT);
+
+    glTexCoord2f(1.0, 1.0);         // 1 1
+    glVertex3d(SKYBOX_WIDHT, SKYBOX_WIDHT, SKYBOX_HEIGHT);
+
+    glTexCoord2f(1.0, 0.0);         // 1 0
+    glVertex3d(SKYBOX_WIDHT, SKYBOX_WIDHT, GROUND_LEVEL);
+    glEnd();
+}
+
+void drawSkyboxTop(int texture) {
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_EXT_CLAMP_TO_EDGE);
+
+    glBegin(GL_QUADS);
+    glTexCoord2s(0.0, 0.0);         // 0 0
+    glVertex3d(-SKYBOX_WIDHT, -SKYBOX_WIDHT, SKYBOX_HEIGHT);
+
+    glTexCoord2s(0.0, 1.0);         // 0 1
+    glVertex3d(-SKYBOX_WIDHT, SKYBOX_WIDHT, SKYBOX_HEIGHT);
+
+    glTexCoord2s(1.0, 1.0);         // 1 1
+    glVertex3d(SKYBOX_WIDHT, SKYBOX_WIDHT, SKYBOX_HEIGHT);
+
+    glTexCoord2s(1.0, 0.0);         // 1 0
+    glVertex3d(SKYBOX_WIDHT, -SKYBOX_WIDHT, SKYBOX_HEIGHT);
+    glEnd();
+}
+
+void drawSkybox(Skybox skybox) {
+
+    drawSkyboxBack(skybox.back);
+    drawSkyboxFront(skybox.front);
+
+    drawSkyboxLeft(skybox.left);
+    drawSkyboxRight(skybox.right);
+
+    drawSkyboxTop(skybox.top);
 }

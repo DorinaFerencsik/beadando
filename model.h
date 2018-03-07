@@ -59,7 +59,7 @@ struct Model
 };
 
 typedef struct {
-    int front, back, left, right, top, texture;
+    int back, front, left, right, top;
 }Skybox;
 
 typedef struct {

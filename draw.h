@@ -6,6 +6,10 @@
 #include <GL/glut.h>
 #include <math.h>
 
+#define SKYBOX_WIDHT 100.0
+#define SKYBOX_HEIGHT 100.0
+#define GROUND_LEVEL 0.0
+
 #ifndef GL_EXT_texture_edge_clamp
 #define GL_EXT_CLAMP_TO_EDGE                 0x812F
 #endif
@@ -24,6 +28,16 @@ void drawTree(double positionX, double positionY, double trunkHeight, Tree tree)
 ////Draw ground
 void drawGround(int texture);
 
-void drawSkybox(int texture);
+void drawSkyboxBack(int texture);
+
+void drawSkyboxFront(int texture);
+
+void drawSkyboxLeft(int texture);
+
+void drawSkyboxRight(int texture);
+
+void drawSkyboxTop(int texture);
+
+void drawSkybox(Skybox skybox);
 
 #endif
