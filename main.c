@@ -6,26 +6,25 @@
 #include <stdlib.h>
 #include <GL/glut.h>
 #include <SOIL/SOIL.h>
+#include <time.h>
 
 #define VIEWPORT_RATIO (4.0 / 3.0)
-#define VIEWPORT_ASPECT 50.0
-
-
 
 double CAMERA_SPEED = 2.0;
-
-double rotateX;
-double rotateY;
 
 int mouseX, mouseY;
 
 double treeCords[100][3];
 const int TREE_PIECE = 100;
 
+double bigTreeX = -5.0;
+double bigTreeY = -5.0;
+double bigTreeHeight = 10.0;
+double bigTreeLeafCords[52][3];
+
 struct Camera camera;
 
-struct Action
-{
+struct Action {
     int moveForward;
     int moveBackward;
     int moveLeft;
@@ -33,12 +32,15 @@ struct Action
     int moveUp;
     int moveDown;
     int speedUp;
+    int increaseLight;
+    int decreaseLight;
+    int lightOn;
 };
 
 struct Action action;
 int times;
 
-struct World world;
+World world;
 
 typedef GLubyte Pixel;
 
@@ -51,10 +53,11 @@ GLuint loadTexture(const char* filename) {
     int width;
     int height;
 
-    image = (Pixel*)SOIL_load_image(filename, &width, &height, 0, SOIL_LOAD_RGBA);
+
+    image = SOIL_load_image(filename, &width, &height, 0, SOIL_LOAD_RGBA);
 
     glBindTexture(GL_TEXTURE_2D, textureName);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (Pixel*)image);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
 
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 
@@ -66,23 +69,20 @@ GLuint loadTexture(const char* filename) {
 }
 
 void initializeTexture() {
-    unsigned int i;
     time_t t;
     int dayTime;
     srand((unsigned) time(&t));
 
-//    for (i=0; i<20; i++){
-        dayTime = (int)(rand() % 3);
-        printf("Daytime number: %f", dayTime);
-//    }
-//    treeCords[0][0] = (double)(rand() % dRange) - range;
-
+    dayTime = (rand() % 3);
+    printf("Daytime number: %d\n", dayTime);
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-    world.ground = loadTexture("textures/grass.png");
+    world.cube = loadTexture("textures/cube.png");
+    world.ground = loadTexture("textures/ground_summer.png");
+    world.garden = loadTexture("textures/garden.png");
     world.tree.trunkTexture = loadTexture("textures/trunk.png");
-    world.tree.leafTexture = loadTexture("textures/leaf.png");
+    world.tree.leafTexture = loadTexture("textures/leaf_summer.png");
 
     switch(dayTime) {
         case 0:
@@ -114,9 +114,9 @@ void initializeTexture() {
             world.skybox.top = loadTexture("textures/skybox/skybox2_top.png");
             break;
     }
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+    world.house.texture = loadTexture("textures/house.png");
 
-//    glEnable(GL_TEXTURE_2D);
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
 }
 
 double calcElapsedTime(){
@@ -165,32 +165,58 @@ void updateCameraPosition(struct Camera* camera, double elapsedTime){
         CAMERA_SPEED = 2.0;
     }
 
+    if (action.increaseLight == TRUE) {
+        if (world.globalAmbient[0] < 1) {
+            world.globalAmbient[0] = world.globalAmbient[1] = world.globalAmbient[2] += 0.1;
+        }
+        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, world.globalAmbient);
+    }
+
+    if (action.decreaseLight == TRUE) {
+        if (world.globalAmbient[0] > 0) {
+            world.globalAmbient[0] = world.globalAmbient[1] = world.globalAmbient[2] -= 0.1;
+        }
+        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, world.globalAmbient);
+    }
+
+    if (action.lightOn) {
+        glEnable(GL_LIGHT2);
+    } else {
+        glDisable(GL_LIGHT2);
+    }
 }
 
 void display(){
-
     double elapsedTime;
+    int i;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    GLfloat lightPosition[] = {0.0, 0.0, 100.0, 1};
+    GLfloat lightAmbient[] = {1, 1, 1, 0};
+    GLfloat lightDiffuse[] = {1, 1, 1, 0};
+    GLfloat lightSpecular[] = {1, 1, 1, 0};
+
+    glLightfv(GL_LIGHT2, GL_POSITION, lightPosition);
+    glLightfv(GL_LIGHT2, GL_AMBIENT, lightAmbient);
+    glLightfv(GL_LIGHT2, GL_DIFFUSE, lightDiffuse);
+    glLightfv(GL_LIGHT2, GL_SPECULAR, lightSpecular);
+
+    glEnable(GL_LIGHT2);
 
     elapsedTime = calcElapsedTime();
     updateCameraPosition(&camera, elapsedTime);
     setViewPoint(&camera);
 
-    glPushMatrix();
-
-
-    drawGround(world.ground);
-
-    int i;
-    for (i = 0; i < TREE_PIECE; i++){
-            drawTree(treeCords[i][0], treeCords[i][1], treeCords[i][2], world.tree);
+    drawGround(world.ground, world.garden);
+    for (i = 0; i < TREE_PIECE; i++) {
+        drawTree(treeCords[i][0], treeCords[i][1], treeCords[i][2], world.tree);
     }
-
+    drawBigTree(bigTreeX, bigTreeY, bigTreeHeight, world.tree, bigTreeLeafCords);
+    drawHouse(world);
     drawSkybox(world.skybox);
-
-    glPopMatrix();
 
     glutSwapBuffers();
 }
@@ -217,7 +243,7 @@ void reshape(GLsizei width, GLsizei height){
     glViewport(0, 0, width, height);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    //              milyen messze legyen a kamera??
+
     gluPerspective(50.0, (GLdouble)width / (GLdouble)height, 0.01, 10000.0);
 
 }
@@ -227,7 +253,7 @@ void mouseHandler(int button, int state, int x, int y) {
     mouseY = y;
 }
 
-void motionHandler(int x, int y) { //körbe forgatás??
+void motionHandler(int x, int y) {
     double horizontal, vertical;
 
     horizontal = mouseX - x;
@@ -261,8 +287,21 @@ void keyHandler(unsigned char key, int x, int y) {
         case 'c':
             action.moveDown = TRUE;
             break;
-        case 9:
+        case 9:         // TAB
             action.speedUp = TRUE;
+            break;
+        case '+':
+            action.increaseLight = TRUE;
+            break;
+        case '-':
+            action.decreaseLight = TRUE;
+            break;
+        case 'f':
+            if (action.lightOn == FALSE) {
+                action.lightOn = TRUE;
+            } else {
+                action.lightOn = FALSE;
+            }
             break;
     }
     glutPostRedisplay();
@@ -282,14 +321,20 @@ void keyUpHandler(unsigned char key, int x, int y) {
         case 'd':
             action.moveRight = FALSE;
             break;
-        case 32:
+        case 32:        // SPACE
             action.moveUp = FALSE;
             break;
         case 'c':
             action.moveDown = FALSE;
             break;
-        case 9:
+        case 9:         // TAB
             action.speedUp = FALSE;
+            break;
+        case '+':
+            action.increaseLight = FALSE;
+            break;
+        case '-':
+            action.decreaseLight = FALSE;
             break;
     }
     glutPostRedisplay();
@@ -299,41 +344,79 @@ void idle() {
     glutPostRedisplay();
 }
 
-void initialize() {
-    //glShadeModel(GL_FLAT);  mi ez
+void setLights(World* world) {
+    world->globalAmbient[0] = 0.7;
+    world->globalAmbient[1] = 0.7;
+    world->globalAmbient[2] = 0.7;
+    world->globalAmbient[3] = 1.0;
+
+    world->materialAmbient[0] = 0.7;
+    world->materialAmbient[1] = 0.7;
+    world->materialAmbient[2] = 0.7;
+    world->materialAmbient[3] = 1.0;
+
+    world->diffuseLightEmission[0] = 0.7;
+    world->diffuseLightEmission[1] = 0.7;
+    world->diffuseLightEmission[2] = 0.7;
+    world->diffuseLightEmission[3] = 1;
+}
+
+void initDiffuseLight() {
+    GLfloat lightPosition[] = {100.0, 100.0, 100.0, 1.0};
+    GLfloat lightAmbient[] = {0.1, 0.1, 0.1, 1};
+    GLfloat lightDiffuse[] = {0.5, 0.5, 0, 1};
+    GLfloat lightSpecular[] = {1, 1, 1, 1};
+
+    glLightfv(GL_LIGHT5, GL_POSITION, lightPosition);
+    glLightfv(GL_LIGHT5, GL_AMBIENT, lightAmbient);
+    glLightfv(GL_LIGHT5, GL_DIFFUSE, lightDiffuse);
+    glLightfv(GL_LIGHT5, GL_SPECULAR, lightSpecular);
+}
+
+void initLighting() {
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, world.globalAmbient);
+    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+    initDiffuseLight();
+    glEnable(GL_LIGHTING);
     glShadeModel(GL_SMOOTH);
+}
 
-    glEnable(GL_NORMALIZE); //enable something
-    glEnable(GL_AUTO_NORMAL);
+void initMaterial() {
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, world.materialAmbient);
+}
 
-    glClearColor(1.0, 1.0, 1.0, 0.0); //maybe utolsó átlátszóság? try
+void initialize() {
+
+    glClearColor(0.0, 0.0, 0.0, 0.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_COLOR_MATERIAL);
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
     glClearDepth(1.0);
 
+    setLights(&world);
+
+    initLighting();
+    initMaterial();
+
+    glEnable(GL_NORMALIZE);
+    glEnable(GL_DEPTH_TEST);
+
     glEnable(GL_TEXTURE_2D);
-    //init the texture
+
     initializeTexture();
 }
 
-void initTreeCoords(){
+void initTreeCords(){
     int i, good, wrong;
     int range = SKYBOX_WIDHT-3;
-    int dRange = 2*SKYBOX_WIDHT-6;
+    int doubleRange = 2*SKYBOX_WIDHT-6;
     time_t t;
 
     srand((unsigned) time(&t));
 
-    treeCords[0][0] = (double)(rand() % dRange) - range;
-    treeCords[0][1] = (double)(rand() % dRange) - range;
+    treeCords[0][0] = (double)(rand() % doubleRange) - range;
+    treeCords[0][1] = (double)(rand() % doubleRange) - range;
     treeCords[0][2] = (double)(rand() % 4) + 3;
 
     for( i = 1 ; i < TREE_PIECE; i++ ) {
@@ -342,27 +425,86 @@ void initTreeCoords(){
             wrong = 0;
             int j = 0;
 
-            treeCords[i][0] = (double) (rand() % dRange) - range;
-            treeCords[i][1] = (double) (rand() % dRange) - range;
-            while (j < i && wrong != 1) {
-                if ((fabs(treeCords[j][0] - treeCords[i][0]) < 4) && (fabs(treeCords[j][1] - treeCords[i][1]) < 4)) {
-                    wrong = 1;
-                } else {
-                    j++;
+            treeCords[i][0] = (double) (rand() % doubleRange) - range;
+            treeCords[i][1] = (double) (rand() % doubleRange) - range;
+            if( (fabs(treeCords[i][0]) <10 && fabs(treeCords[i][1]) < 10) ) {
+            } else {
+                while (j < i && wrong != 1) {
+                    if ((fabs(treeCords[j][0] - treeCords[i][0]) < 4) && (fabs(treeCords[j][1] - treeCords[i][1]) < 4)) {
+                        wrong = 1;
+                    } else {
+                        j++;
+                    }
                 }
-            }
-            if (j == i) {
-                good = 1;
+                if (j == i) {
+                    good = 1;
+                }
             }
         };
         treeCords[i][2] = (double) (rand() % 4) + 3;
     }
 }
 
+void calcBigLeafCords(double posX, double posY, double width, double height, int* index) {
+    double x, y, yMax, yMin;
+    int step = 0, i = *index;
+
+    x = posX;
+    yMax = posY+width;
+    yMin = posY-width;
+
+    for (y = yMax; y > yMin; y -= 1.0) {
+        if(y > posY) {
+            x++;
+            step += 2;
+        } else if ( y < posY ) {
+            x--;
+            step -= 2;
+        }
+
+        bigTreeLeafCords[i][0] = x-1;
+        bigTreeLeafCords[i][1] = y;
+        bigTreeLeafCords[i][2] = height;
+
+        bigTreeLeafCords[i-1][0] = x-step;
+        bigTreeLeafCords[i-1][1] = y;
+        bigTreeLeafCords[i-1][2] = height;
+
+        i += 2;
+        *index += 2;
+    }
+}
+
+void initBigTreeLeafCords() {
+    int index = 1;
+
+    //// Level 0 (bottom)
+    calcBigLeafCords(bigTreeX, bigTreeY, 3.0, bigTreeHeight, &index);
+
+    //// Level 1
+    calcBigLeafCords(bigTreeX, bigTreeY, 4.0, bigTreeHeight+1, &index);
+
+    //// Level 2
+    calcBigLeafCords(bigTreeX, bigTreeY, 3.0, bigTreeHeight+2, &index);
+
+    //// Level 3
+    calcBigLeafCords(bigTreeX, bigTreeY, 2.0, bigTreeHeight+3, &index);
+
+    //// Level 4 top
+    calcBigLeafCords(bigTreeX, bigTreeY, 1.0, bigTreeHeight+4, &index);
+
+}
+
 
 int main(int argc, char* argv[]) {
 
-    initTreeCoords();
+    initTreeCords();
+    initBigTreeLeafCords();
+
+    loadModel("models/house.obj", &world.house.model);
+    // TODO x, y, z scales
+    scaleModel(&world.house.model, 13.0, -5.0, 19.248);
+    printBoundingBox(&world.house.model);
 
     glutInit(&argc, argv);
 
@@ -390,6 +532,7 @@ int main(int argc, char* argv[]) {
     action.moveUp = FALSE;
     action.moveDown = FALSE;
     action.speedUp = FALSE;
+    action.lightOn = FALSE;
 
     glutMainLoop();
 

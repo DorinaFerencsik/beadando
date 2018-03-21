@@ -4,14 +4,13 @@
 #include <math.h>
 
 
-double degreeToRadian(double degree)
-{
+double degreeToRadian(double degree) {
     return degree * M_PI / 180.0;
 }
 
 void initCamera(struct Camera* camera) {
-    camera->position.x = -5;
-    camera->position.y = 0;
+    camera->position.x = 1;
+    camera->position.y = -7;
     camera->position.z = 2;
 
     camera->pose.x = 0;
@@ -49,52 +48,46 @@ void rotateCamera(struct Camera* camera, double horizontal, double vertical) {
     }
 }
 
-void moveForward(struct Camera* camera, double distance){
+void moveForward(struct Camera* camera, double distance) {
     double angle = degreeToRadian(camera->pose.z);
 
     camera->position.x += cos(angle) * distance;
     camera->position.y += sin(angle) * distance;
 }
 
-/**
- * Move the camera backward.
- */
-void moveBackward(struct Camera* camera, double distance){
+//// Move the camera backward
+void moveBackward(struct Camera* camera, double distance) {
     double angle = degreeToRadian(camera->pose.z);
 
     camera->position.x -= cos(angle) * distance;
     camera->position.y -= sin(angle) * distance;
 }
 
-/**
- * Step the camera left.
- */
-void moveLeft(struct Camera* camera, double distance){
+//// Step the camera left
+void moveLeft(struct Camera* camera, double distance) {
     double angle = degreeToRadian(camera->pose.z + 90);
 
     camera->position.x += cos(angle) * distance;
     camera->position.y += sin(angle) * distance;
 }
 
-/**
- * Step the camera right.
- */
-void moveRight(struct Camera* camera, double distance){
+//// Step the camera right
+void moveRight(struct Camera* camera, double distance) {
     double angle = degreeToRadian(camera->pose.z - 90);
 
     camera->position.x += cos(angle) * distance;
     camera->position.y += sin(angle) * distance;
 }
 
-void moveUp(struct Camera* camera, double distance){
-    double angle = degreeToRadian(camera->pose.z);
-
+//// Step the camera up
+void moveUp(struct Camera* camera, double distance) {
+//    double angle = degreeToRadian(camera->pose.z);
     camera->position.z += distance;
 }
 
-void moveDown(struct Camera* camera, double distance){
-    double angle = degreeToRadian(camera->pose.z);
-
+//// Step the camera down
+void moveDown(struct Camera* camera, double distance) {
+//    double angle = degreeToRadian(camera->pose.z);
     camera->position.z -= distance;
 }
 
