@@ -69,6 +69,7 @@ typedef struct {
 typedef struct World{
     int ground;
     int garden;
+    int helpMenu;
 
     Entity house;
     Skybox skybox;

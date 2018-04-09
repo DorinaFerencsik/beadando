@@ -12,6 +12,8 @@
 
 double CAMERA_SPEED = 2.0;
 
+int WINDOW_WIDTH;
+int WINDOW_HEIGHT;
 int mouseX, mouseY;
 
 struct Camera camera;
@@ -27,6 +29,7 @@ struct Action {
     int increaseLight;
     int decreaseLight;
     int lightOn;
+    int helpOpen;
 };
 
 struct Action action;
@@ -69,6 +72,7 @@ void initializeTexture() {
 
     world.ground = loadTexture("textures/ground_summer.png");
     world.garden = loadTexture("textures/garden.png");
+    world.helpMenu = loadTexture("textures/helpMenu.png");
     world.tree.trunkTexture = loadTexture("textures/trunk.png");
     world.tree.leafTexture = loadTexture("textures/leaf_summer.png");
 
@@ -220,19 +224,21 @@ void keyHandler(unsigned char key, int x, int y) {
         case 9:         // TAB
             action.speedUp = TRUE;
             break;
-        case 'p':
+        case '+':
             action.increaseLight = TRUE;
             break;
-        case 'o':
+        case '-':
             action.decreaseLight = TRUE;
             break;
-        case 'f':
+        case 'l':
             if (action.lightOn == FALSE) {
                 action.lightOn = TRUE;
             } else {
                 action.lightOn = FALSE;
             }
             break;
+        case 27:        // ESC
+            exit(0);
     }
     glutPostRedisplay();
 }
@@ -260,16 +266,60 @@ void keyUpHandler(unsigned char key, int x, int y) {
         case 9:         // TAB
             action.speedUp = FALSE;
             break;
-        case 'p':
+        case '+':
             action.increaseLight = FALSE;
             break;
-        case 'o':
+        case '-':
             action.decreaseLight = FALSE;
             break;
     }
     glutPostRedisplay();
 }
+
+void specialFunc(int key, int x, int y) {
+    switch (key) {
+        case GLUT_KEY_F1:
+            if (action.helpOpen) {
+                action.helpOpen = FALSE;
+
+                glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, world.materialAmbient);
+                glLightModelfv(GL_LIGHT_MODEL_AMBIENT, world.globalAmbient);
+            } else {
+                action.helpOpen = TRUE;
+
+                GLfloat ones[] = {1, 1, 1, 1};
+                glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ones);
+                glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ones);
+            }
+    }
+}
 //// END key and mouse handler functions
+
+void drawHelpMenu() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, world.helpMenu);
+    glBegin(GL_QUADS);
+    glTexCoord2f(0, 0);
+    glVertex3f(0, 0, 0);
+
+    glTexCoord2f(1, 0);
+    glVertex3f(WINDOW_WIDTH, 0, 0);
+
+    glTexCoord2f(1, 1);
+    glVertex3f(WINDOW_WIDTH, WINDOW_HEIGHT, 0);
+
+    glTexCoord2f(0, 1);
+    glVertex3f(0, WINDOW_HEIGHT, 0);
+    glEnd();
+    glDisable(GL_TEXTURE_2D);
+
+    reshape(WINDOW_WIDTH, WINDOW_HEIGHT);
+    glutSwapBuffers();
+}
 
 double calcElapsedTime(){
     int currentTime;
@@ -283,37 +333,49 @@ double calcElapsedTime(){
 }
 
 void display(){
-    double elapsedTime;
+    if (action.helpOpen == FALSE) {
+        double elapsedTime;
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
 
-    GLfloat lightPosition[] = {0.0, 0.0, 10.0, 1};
-    GLfloat lightAmbient[] = {1, 1, 1, 1};
-    GLfloat lightDiffuse[] = {1, 1, 1, 1};
-    GLfloat lightSpecular[] = {1, 1, 1, 1};
+        GLfloat lightPosition[] = {0.0, 0.0, 10.0, 1};
+        GLfloat lightAmbient[] = {1, 1, 1, 1};
+        GLfloat lightDiffuse[] = {1, 1, 1, 1};
+        GLfloat lightSpecular[] = {1, 1, 1, 1};
 
-    glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
-    glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpecular);
+        glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
+        glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
+        glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
+        glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpecular);
 
-    glEnable(GL_LIGHT0);
+        glEnable(GL_LIGHT0);
+        glEnable(GL_TEXTURE_2D);
+        glEnable(GL_NORMALIZE);
+        glEnable(GL_DEPTH_TEST);
 
-    elapsedTime = calcElapsedTime();
-    updateCameraPosition(&camera, elapsedTime);
-    setViewPoint(&camera);
+        elapsedTime = calcElapsedTime();
+        updateCameraPosition(&camera, elapsedTime);
+        setViewPoint(&camera);
 
-    drawWorld(world);
+        reshape(WINDOW_WIDTH, WINDOW_HEIGHT);
 
-    glutSwapBuffers();
+        drawWorld(world);
+
+        glutSwapBuffers();
+    } else {
+        drawHelpMenu();
+    }
+    glFlush();
 }
 
 void reshape(GLsizei width, GLsizei height){
-
     int x, y, w, h;
     double ratio;
+
+    WINDOW_WIDTH = width;
+    WINDOW_HEIGHT = height;
 
     ratio = (double)width / height;
     if (ratio > VIEWPORT_RATIO) {
@@ -333,7 +395,11 @@ void reshape(GLsizei width, GLsizei height){
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-    gluPerspective(50.0, (GLdouble)width / (GLdouble)height, 0.01, 10000.0);
+    if (action.helpOpen == FALSE) {
+        gluPerspective(50.0, (GLdouble)width / (GLdouble)height, 0.01, 10000.0);
+    } else {
+        gluOrtho2D(0, width, height, 0);
+    }
 
 }
 
@@ -384,7 +450,7 @@ void initMaterial() {
 }
 //// END light functions
 
-//// Init actions 
+//// Init actions
 void initActions() {
     action.moveForward = FALSE;
     action.moveBackward = FALSE;
@@ -394,6 +460,7 @@ void initActions() {
     action.moveDown = FALSE;
     action.speedUp = FALSE;
     action.lightOn = TRUE;
+    action.helpOpen = FALSE;
 }
 
 void initialize() {
@@ -434,7 +501,8 @@ int main(int argc, char* argv[]) {
 
     glutInit(&argc, argv);
 
-    glutInitWindowSize(640, 480);
+    glutInitWindowSize(1024, 568);
+    glutInitWindowPosition(100, 50);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
     int window = glutCreateWindow("GLUT Window");
     glutSetWindow(window);
@@ -448,6 +516,7 @@ int main(int argc, char* argv[]) {
     glutMouseFunc(mouseHandler);
     glutMotionFunc(motionHandler);
     glutIdleFunc(idle);
+    glutSpecialFunc(specialFunc);
 
     glutMainLoop();
 
