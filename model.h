@@ -58,9 +58,7 @@ typedef struct {
 } Skybox;
 
 typedef struct {
-//    Model model;
     int leafTexture, trunkTexture;
-//    float material_ambient[4];
 } Tree;
 
 typedef struct {
@@ -71,7 +69,7 @@ typedef struct {
 typedef struct World{
     int ground;
     int garden;
-    int cube;
+
     Entity house;
     Skybox skybox;
     Tree tree;
@@ -81,17 +79,15 @@ typedef struct World{
     float diffuseLightEmission[4];
 } World;
 
+//// Load model
 int loadModel(const char* filename, struct Model* model);
 
-//// Start shared functions
 void extractTokens(const char* text, struct TokenArray* tokenArray);
 
 void clearComment(char* line);
 
 void initModelCounters(struct Model* model);
-//// End shared functions
 
-///// Start cr functions
 void freeTokens(struct TokenArray* tokenArray);
 
 int countTokens(const char* text);

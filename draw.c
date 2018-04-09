@@ -2,6 +2,20 @@
 
 #include <GL/glut.h>
 #include <SOIL/SOIL.h>
+#include <time.h>
+
+//// Normal trees coords
+double treeCords[200][3];
+
+//// Normal trees piece number
+const int TREE_PIECE = 200;
+
+//// The only big tree coords
+double bigTreeX = -5.0;
+double bigTreeY = -5.0;
+double bigTreeHeight = 10.0;
+double bigTreeLeafCords[52][3];
+
 
 void drawBlock(double x, double y, double z, int texture) {
 
@@ -113,7 +127,7 @@ void drawBlock(double x, double y, double z, int texture) {
     glPopMatrix();
 }
 
-//// Start tree func
+//// START tree func
 void drawTree(double positionX, double positionY, double trunkHeight, Tree tree){
     double z;
 
@@ -172,25 +186,25 @@ void drawBigTree(double positionX, double positionY, double trunkHeight, Tree tr
     drawBlock(positionX, positionY-1, trunkHeight, tree.trunkTexture);
     drawBlock(positionX-1, positionY-1, trunkHeight, tree.trunkTexture);
 }
-//// End tree func
+//// END tree func
 
 //// Draw ground
 void drawGround(int groundTexture, int gardenTexture) {
 
-    double x, y, z;
+    double x, y, z = 0.0;
 
         for (x = -SKYBOX_WIDHT; x < SKYBOX_WIDHT; x++) {
             for (y = -SKYBOX_WIDHT; y < SKYBOX_WIDHT; y++) {
-                if( (fabs(x) <10 && fabs(y) < 10) ) {
-                    drawBlock(x, y, 0.0, gardenTexture);
+                if( (fabs(x) < 10 && fabs(y) < 10) ) {
+                    drawBlock(x, y, z, gardenTexture);
                 } else {
-                    drawBlock(x, y, 0.0, groundTexture);
+                    drawBlock(x, y, z, groundTexture);
                 }
-//                drawBlock(x, y, 0.0, texture);
             }
         }
 }
 
+// Deprecated
 void drawPlatform(int texture) {
     double i, j;
     for (i = -10.0; i < 10.0; i++) {
@@ -201,19 +215,9 @@ void drawPlatform(int texture) {
 }
 
 
-//// Start skybox func
+//// START skybox func
 void drawSkyboxBack(int texture) {
     glPushMatrix();
-
-    GLfloat materialAmbient[] = {0.5, 0.5, 0.5, 1};
-    GLfloat materialDiffuse[] = {0.7, 0.7, 0.7, 1};
-    GLfloat materialSpecular[] = {1, 1, 1, 1};
-    GLfloat materialShininess[] = {50.0};
-
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, materialAmbient);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, materialDiffuse);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, materialSpecular);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, materialShininess);
 
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_EXT_CLAMP_TO_EDGE);
@@ -238,16 +242,6 @@ void drawSkyboxBack(int texture) {
 void drawSkyboxFront(int texture) {
     glPushMatrix();
 
-    GLfloat materialAmbient[] = {0.5, 0.5, 0.5, 1};
-    GLfloat materialDiffuse[] = {0.7, 0.7, 0.7, 1};
-    GLfloat materialSpecular[] = {1, 1, 1, 1};
-    GLfloat materialShininess[] = {50.0};
-
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, materialAmbient);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, materialDiffuse);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, materialSpecular);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, materialShininess);
-
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_EXT_CLAMP_TO_EDGE);
 
@@ -270,16 +264,6 @@ void drawSkyboxFront(int texture) {
 
 void drawSkyboxLeft(int texture) {
     glPushMatrix();
-
-    GLfloat materialAmbient[] = {0.5, 0.5, 0.5, 1};
-    GLfloat materialDiffuse[] = {0.7, 0.7, 0.7, 1};
-    GLfloat materialSpecular[] = {1, 1, 1, 1};
-    GLfloat materialShininess[] = {50.0};
-
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, materialAmbient);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, materialDiffuse);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, materialSpecular);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, materialShininess);
 
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_EXT_CLAMP_TO_EDGE);
@@ -304,16 +288,6 @@ void drawSkyboxLeft(int texture) {
 void drawSkyboxRight(int texture) {
     glPushMatrix();
 
-    GLfloat materialAmbient[] = {0.5, 0.5, 0.5, 1};
-    GLfloat materialDiffuse[] = {0.7, 0.7, 0.7, 1};
-    GLfloat materialSpecular[] = {1, 1, 1, 1};
-    GLfloat materialShininess[] = {50.0};
-
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, materialAmbient);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, materialDiffuse);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, materialSpecular);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, materialShininess);
-
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_EXT_CLAMP_TO_EDGE);
 
@@ -337,16 +311,6 @@ void drawSkyboxRight(int texture) {
 void drawSkyboxTop(int texture) {
     glPushMatrix();
 
-    GLfloat materialAmbient[] = {0.5, 0.5, 0.5, 1};
-    GLfloat materialDiffuse[] = {0.7, 0.7, 0.7, 1};
-    GLfloat materialSpecular[] = {1, 1, 1, 1};
-    GLfloat materialShininess[] = {50.0};
-
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, materialAmbient);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, materialDiffuse);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, materialSpecular);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, materialShininess);
-
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_EXT_CLAMP_TO_EDGE);
 
@@ -369,6 +333,16 @@ void drawSkyboxTop(int texture) {
 
 void drawSkybox(Skybox skybox) {
 
+    GLfloat materialAmbient[] = {0.5, 0.5, 0.5, 1};
+    GLfloat materialDiffuse[] = {0, 0, 0, 1};
+    GLfloat materialSpecular[] = {0, 0, 0, 1};
+    GLfloat materialShininess[] = {50.0};
+
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, materialAmbient);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, materialDiffuse);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, materialSpecular);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, materialShininess);
+
     drawSkyboxBack(skybox.back);
     drawSkyboxFront(skybox.front);
 
@@ -377,10 +351,10 @@ void drawSkybox(Skybox skybox) {
 
     drawSkyboxTop(skybox.top);
 }
-//// End skybox func
+//// END skybox func
 
 
-//// Start model func
+//// START model func
 void drawTriangles(const struct Model* model) {
     int i, k;
     int vertexIndex, textureIndex;
@@ -459,4 +433,111 @@ void drawHouse(World world) {
 
     glPopMatrix();
 }
-//// End model func
+//// END model func
+
+
+//// World
+void drawWorld(struct World world) {
+    int i;
+
+    drawGround(world.ground, world.garden);
+    for (i = 0; i < TREE_PIECE; i++) {
+        drawTree(treeCords[i][0], treeCords[i][1], treeCords[i][2], world.tree);
+    }
+    drawBigTree(bigTreeX, bigTreeY, bigTreeHeight, world.tree, bigTreeLeafCords);
+    drawHouse(world);
+    drawSkybox(world.skybox);
+}
+
+//// Initalize tree x,y,z coords
+void initTreeCoords(){
+    int i, good, wrong;
+    int range = SKYBOX_WIDHT-3;
+    int doubleRange = 2*SKYBOX_WIDHT-6;
+    time_t t;
+
+    srand((unsigned) time(&t));
+
+    treeCords[0][0] = (double)(rand() % doubleRange) - range;
+    treeCords[0][1] = (double)(rand() % doubleRange) - range;
+    treeCords[0][2] = (double)(rand() % 4) + 3;
+
+    for( i = 1 ; i < TREE_PIECE; i++ ) {
+        good = 0;
+        while (good != 1) {
+            wrong = 0;
+            int j = 0;
+
+            treeCords[i][0] = (double) (rand() % doubleRange) - range;
+            treeCords[i][1] = (double) (rand() % doubleRange) - range;
+            if( (fabs(treeCords[i][0]) >= 10 || fabs(treeCords[i][1]) >= 10) ) {
+                while (j < i && wrong != 1) {
+                    if ((fabs(treeCords[j][0] - treeCords[i][0]) < 4) && (fabs(treeCords[j][1] - treeCords[i][1]) < 4)) {
+                        wrong = 1;
+                    } else {
+                        j++;
+                    }
+                }
+                if (j == i) {
+                    good = 1;
+                }
+            }
+        };
+        treeCords[i][2] = (double) (rand() % 4) + 3;
+    }
+}
+
+void calcBigTreeLeafCords(double posX, double posY, double width, double height, int* index) {
+    double x, y, yMax, yMin;
+    int step = 0, i = *index;
+
+    x = posX;
+    yMax = posY+width;
+    yMin = posY-width;
+
+    for (y = yMax; y > yMin; y -= 1.0) {
+        if(y > posY) {
+            x++;
+            step += 2;
+        } else if ( y < posY ) {
+            x--;
+            step -= 2;
+        }
+
+        bigTreeLeafCords[i][0] = x-1;
+        bigTreeLeafCords[i][1] = y;
+        bigTreeLeafCords[i][2] = height;
+
+        bigTreeLeafCords[i-1][0] = x-step;
+        bigTreeLeafCords[i-1][1] = y;
+        bigTreeLeafCords[i-1][2] = height;
+
+        i += 2;
+        *index += 2;
+    }
+}
+
+void initBigTreeLeafCords() {
+    int index = 1;
+
+    //// Level 0 (bottom)
+    calcBigTreeLeafCords(bigTreeX, bigTreeY, 3.0, bigTreeHeight, &index);
+
+    //// Level 1
+    calcBigTreeLeafCords(bigTreeX, bigTreeY, 4.0, bigTreeHeight+1, &index);
+
+    //// Level 2
+    calcBigTreeLeafCords(bigTreeX, bigTreeY, 3.0, bigTreeHeight+2, &index);
+
+    //// Level 3
+    calcBigTreeLeafCords(bigTreeX, bigTreeY, 2.0, bigTreeHeight+3, &index);
+
+    //// Level 4 top
+    calcBigTreeLeafCords(bigTreeX, bigTreeY, 1.0, bigTreeHeight+4, &index);
+
+}
+
+void initializeAllTreeCoords() {
+    initTreeCoords();
+    initBigTreeLeafCords();
+}

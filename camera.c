@@ -47,7 +47,7 @@ void rotateCamera(struct Camera* camera, double horizontal, double vertical) {
         camera->pose.x -= 360.0;
     }
 }
-
+//// START camera moving functions
 void moveForward(struct Camera* camera, double distance) {
     double angle = degreeToRadian(camera->pose.z);
 
@@ -55,7 +55,6 @@ void moveForward(struct Camera* camera, double distance) {
     camera->position.y += sin(angle) * distance;
 }
 
-//// Move the camera backward
 void moveBackward(struct Camera* camera, double distance) {
     double angle = degreeToRadian(camera->pose.z);
 
@@ -63,7 +62,6 @@ void moveBackward(struct Camera* camera, double distance) {
     camera->position.y -= sin(angle) * distance;
 }
 
-//// Step the camera left
 void moveLeft(struct Camera* camera, double distance) {
     double angle = degreeToRadian(camera->pose.z + 90);
 
@@ -71,7 +69,6 @@ void moveLeft(struct Camera* camera, double distance) {
     camera->position.y += sin(angle) * distance;
 }
 
-//// Step the camera right
 void moveRight(struct Camera* camera, double distance) {
     double angle = degreeToRadian(camera->pose.z - 90);
 
@@ -79,15 +76,13 @@ void moveRight(struct Camera* camera, double distance) {
     camera->position.y += sin(angle) * distance;
 }
 
-//// Step the camera up
 void moveUp(struct Camera* camera, double distance) {
 //    double angle = degreeToRadian(camera->pose.z);
     camera->position.z += distance;
 }
 
-//// Step the camera down
 void moveDown(struct Camera* camera, double distance) {
 //    double angle = degreeToRadian(camera->pose.z);
     camera->position.z -= distance;
 }
-
+//// END camera moving functions
