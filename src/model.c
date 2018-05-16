@@ -1,4 +1,4 @@
-#include "model.h"
+#include "../includes/model.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -451,8 +451,5 @@ void scaleModel(struct Model* model, double sx, double sy, double sz) {
         model->vertices[i].x += sx;
         model->vertices[i].y += sy;
         model->vertices[i].z += sz;
-//        model->vertices[i].x *= sx;
-//        model->vertices[i].y *= sy;
-//        model->vertices[i].z *= sz;
     }
 }

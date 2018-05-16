@@ -59,7 +59,15 @@ typedef struct {
 
 typedef struct {
     int leafTexture, trunkTexture;
+    double cords[200][3];
 } Tree;
+
+typedef struct {
+    double positionX;
+    double positionY;
+    double height;
+    double leafCords[52][3];
+} BigTree;
 
 typedef struct {
     Model model;
@@ -74,6 +82,7 @@ typedef struct World{
     Entity house;
     Skybox skybox;
     Tree tree;
+    BigTree bigTree;
 
     float globalAmbient[4];
     float materialAmbient[4];

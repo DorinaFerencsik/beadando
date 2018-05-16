@@ -1,4 +1,5 @@
-#include "draw.h"
+#include "../includes/draw.h"
+#include "../includes/model.h"
 
 #include <GL/glut.h>
 #include <SOIL/SOIL.h>
@@ -161,7 +162,7 @@ void drawTree(double positionX, double positionY, double trunkHeight, Tree tree)
     }
 }
 
-void drawBigTree(double positionX, double positionY, double trunkHeight, Tree tree, double cords[40][3]){
+void drawBigTree(double positionX, double positionY, double trunkHeight, Tree tree, double cords[52][3]){
     double z;
     int i;
 
@@ -414,8 +415,7 @@ void drawModel(const struct Model* model) {
     drawQuads(model);
 }
 
-void drawHouse(World world) {
-//    glScalef(16, 16, 16);
+void drawHouse() {
     glPushMatrix();
 
     GLfloat materialAmbient[] = {0.5, 0.5, 0.5, 1};
@@ -437,20 +437,21 @@ void drawHouse(World world) {
 
 
 //// World
-void drawWorld(struct World world) {
+void drawWorld() {
     int i;
 
     drawGround(world.ground, world.garden);
     for (i = 0; i < TREE_PIECE; i++) {
-        drawTree(treeCords[i][0], treeCords[i][1], treeCords[i][2], world.tree);
+        drawTree(world.tree.cords[i][0], world.tree.cords[i][1], world.tree.cords[i][2], world.tree);
     }
-    drawBigTree(bigTreeX, bigTreeY, bigTreeHeight, world.tree, bigTreeLeafCords);
-    drawHouse(world);
+    drawBigTree(world.bigTree.positionX, world.bigTree.positionY, world.bigTree.height, world.tree, world.bigTree.leafCords);
+    drawHouse();
     drawSkybox(world.skybox);
 }
 
 //// Initalize tree x,y,z coords
 void initTreeCoords(){
+    printf("Initialize normal tree coords...\n");
     int i, good, wrong;
     int range = SKYBOX_WIDHT-3;
     int doubleRange = 2*SKYBOX_WIDHT-6;
@@ -458,9 +459,9 @@ void initTreeCoords(){
 
     srand((unsigned) time(&t));
 
-    treeCords[0][0] = (double)(rand() % doubleRange) - range;
-    treeCords[0][1] = (double)(rand() % doubleRange) - range;
-    treeCords[0][2] = (double)(rand() % 4) + 3;
+    world.tree.cords[0][0] = (double)(rand() % doubleRange) - range;
+    world.tree.cords[0][1] = (double)(rand() % doubleRange) - range;
+    world.tree.cords[0][2] = (double)(rand() % 4) + 3;
 
     for( i = 1 ; i < TREE_PIECE; i++ ) {
         good = 0;
@@ -468,11 +469,12 @@ void initTreeCoords(){
             wrong = 0;
             int j = 0;
 
-            treeCords[i][0] = (double) (rand() % doubleRange) - range;
-            treeCords[i][1] = (double) (rand() % doubleRange) - range;
-            if( (fabs(treeCords[i][0]) >= 10 || fabs(treeCords[i][1]) >= 10) ) {
+            world.tree.cords[i][0] = (double)(rand() % doubleRange) - range;
+            world.tree.cords[i][1] = (double)(rand() % doubleRange) - range;
+
+            if( (fabs(world.tree.cords[i][0]) >= 10 || fabs(world.tree.cords[i][1]) >= 10) ) {
                 while (j < i && wrong != 1) {
-                    if ((fabs(treeCords[j][0] - treeCords[i][0]) < 4) && (fabs(treeCords[j][1] - treeCords[i][1]) < 4)) {
+                    if ((fabs(world.tree.cords[j][0] - world.tree.cords[i][0]) < 4) && (fabs(world.tree.cords[j][1] - world.tree.cords[i][1]) < 4)) {
                         wrong = 1;
                     } else {
                         j++;
@@ -483,34 +485,33 @@ void initTreeCoords(){
                 }
             }
         };
-        treeCords[i][2] = (double) (rand() % 4) + 3;
+        world.tree.cords[i][2] = (double) (rand() % 4) + 3;
     }
 }
 
-void calcBigTreeLeafCords(double posX, double posY, double width, double height, int* index) {
+void calcBigTreeLeafCords(double width, double height, int* index) {
     double x, y, yMax, yMin;
     int step = 0, i = *index;
 
-    x = posX;
-    yMax = posY+width;
-    yMin = posY-width;
+    x = world.bigTree.positionX;
+    yMax = world.bigTree.positionY+width;
+    yMin = world.bigTree.positionY-width;
 
     for (y = yMax; y > yMin; y -= 1.0) {
-        if(y > posY) {
+        if(y > world.bigTree.positionY) {
             x++;
             step += 2;
-        } else if ( y < posY ) {
+        } else if ( y < world.bigTree.positionY ) {
             x--;
             step -= 2;
         }
+        world.bigTree.leafCords[i][0] = x-1;
+        world.bigTree.leafCords[i][1] = y;
+        world.bigTree.leafCords[i][2] = height;
 
-        bigTreeLeafCords[i][0] = x-1;
-        bigTreeLeafCords[i][1] = y;
-        bigTreeLeafCords[i][2] = height;
-
-        bigTreeLeafCords[i-1][0] = x-step;
-        bigTreeLeafCords[i-1][1] = y;
-        bigTreeLeafCords[i-1][2] = height;
+        world.bigTree.leafCords[i-1][0] = x-step;
+        world.bigTree.leafCords[i-1][1] = y;
+        world.bigTree.leafCords[i-1][2] = height;
 
         i += 2;
         *index += 2;
@@ -518,26 +519,124 @@ void calcBigTreeLeafCords(double posX, double posY, double width, double height,
 }
 
 void initBigTreeLeafCords() {
+    printf("Initialize big tree coords...\n");
     int index = 1;
+    double height = world.bigTree.height;
 
     //// Level 0 (bottom)
-    calcBigTreeLeafCords(bigTreeX, bigTreeY, 3.0, bigTreeHeight, &index);
+    calcBigTreeLeafCords(3.0, height, &index);
 
     //// Level 1
-    calcBigTreeLeafCords(bigTreeX, bigTreeY, 4.0, bigTreeHeight+1, &index);
+    calcBigTreeLeafCords(4.0, height+1, &index);
 
     //// Level 2
-    calcBigTreeLeafCords(bigTreeX, bigTreeY, 3.0, bigTreeHeight+2, &index);
+    calcBigTreeLeafCords(3.0, height+2, &index);
 
     //// Level 3
-    calcBigTreeLeafCords(bigTreeX, bigTreeY, 2.0, bigTreeHeight+3, &index);
+    calcBigTreeLeafCords(2.0, height+3, &index);
 
     //// Level 4 top
-    calcBigTreeLeafCords(bigTreeX, bigTreeY, 1.0, bigTreeHeight+4, &index);
+    calcBigTreeLeafCords(1.0, height+4, &index);
 
 }
 
+void initTreeSize() {
+    world.bigTree.positionX = -5.0;
+    world.bigTree.positionY = -5.0;
+    world.bigTree.height = 10.0;
+}
+
 void initializeAllTreeCoords() {
+    initTreeSize();
+
     initTreeCoords();
     initBigTreeLeafCords();
+}
+
+GLuint loadTexture(const char* filename) {
+    int width;
+    int height;
+
+    GLuint textureName;
+    Pixel* image;
+    glGenTextures(1, &textureName);
+
+    image = SOIL_load_image(filename, &width, &height, 0, SOIL_LOAD_RGBA);
+
+    glBindTexture(GL_TEXTURE_2D, textureName);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    return textureName;
+}
+
+void initializeTexture() {
+    time_t t;
+    int dayTime;
+    srand((unsigned) time(&t));
+
+    dayTime = (rand() % 3);
+    printf("Daytime number: %d\n", dayTime);
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+    printf("Loading textures...\n");
+    world.ground = loadTexture("src/textures/ground_summer.png");
+    world.garden = loadTexture("src/textures/garden.png");
+    world.helpMenu = loadTexture("src/textures/helpMenu.png");
+    world.tree.trunkTexture = loadTexture("src/textures/trunk.png");
+    world.tree.leafTexture = loadTexture("src/textures/leaf_summer.png");
+
+    switch(dayTime) {
+        case 0:
+            world.skybox.back = loadTexture("src/textures/skybox/nightbox3_back.png");
+            world.skybox.front = loadTexture("src/textures/skybox/nightbox3_front.png");
+            world.skybox.left = loadTexture("src/textures/skybox/nightbox3_left.png");
+            world.skybox.right = loadTexture("src/textures/skybox/nightbox3_right.png");
+            world.skybox.top = loadTexture("src/textures/skybox/nightbox3_top.png");
+
+            world.globalAmbient[0] = 0.3;
+            world.globalAmbient[1] = 0.3;
+            world.globalAmbient[2] = 0.3;
+            glLightModelfv(GL_LIGHT_MODEL_AMBIENT, world.globalAmbient);
+            break;
+        case 1:
+            world.skybox.back = loadTexture("src/textures/skybox/skybox1_back.png");
+            world.skybox.front = loadTexture("src/textures/skybox/skybox1_front.png");
+            world.skybox.left = loadTexture("src/textures/skybox/skybox1_left.png");
+            world.skybox.right = loadTexture("src/textures/skybox/skybox1_right.png");
+            world.skybox.top = loadTexture("src/textures/skybox/skybox1_top.png");
+
+            world.globalAmbient[0] = 0.6;
+            world.globalAmbient[1] = 0.6;
+            world.globalAmbient[2] = 0.6;
+            glLightModelfv(GL_LIGHT_MODEL_AMBIENT, world.globalAmbient);
+            break;
+        case 2:
+            world.skybox.back = loadTexture("src/textures/skybox/skybox2_back.png");
+            world.skybox.front = loadTexture("src/textures/skybox/skybox2_front.png");
+            world.skybox.left = loadTexture("src/textures/skybox/skybox2_left.png");
+            world.skybox.right = loadTexture("src/textures/skybox/skybox2_right.png");
+            world.skybox.top = loadTexture("src/textures/skybox/skybox2_top.png");
+
+            world.globalAmbient[0] = 1.0;
+            world.globalAmbient[1] = 1.0;
+            world.globalAmbient[2] = 1.0;
+            glLightModelfv(GL_LIGHT_MODEL_AMBIENT, world.globalAmbient);
+            break;
+        default:
+            world.skybox.back = loadTexture("src/textures/skybox/skybox2_back.png");
+            world.skybox.front = loadTexture("src/textures/skybox/skybox2_front.png");
+            world.skybox.left = loadTexture("src/textures/skybox/skybox2_left.png");
+            world.skybox.right = loadTexture("src/textures/skybox/skybox2_right.png");
+            world.skybox.top = loadTexture("src/textures/skybox/skybox2_top.png");
+            break;
+    }
+    world.house.texture = loadTexture("src/textures/house.png");
+
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 }

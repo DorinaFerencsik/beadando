@@ -1,6 +1,6 @@
-#include "camera.h"
-#include "draw.h"
-#include "model.h"
+#include "../includes/camera.h"
+#include "../includes/draw.h"
+#include "../includes/model.h"
 
 #include "math.h"
 #include <stdlib.h>
@@ -35,96 +35,6 @@ struct Action {
 struct Action action;
 int times;
 
-World world;
-
-typedef GLubyte Pixel;
-
-GLuint loadTexture(const char* filename) {
-    int width;
-    int height;
-
-    GLuint textureName;
-    Pixel* image;
-    glGenTextures(1, &textureName);
-
-    image = SOIL_load_image(filename, &width, &height, 0, SOIL_LOAD_RGBA);
-
-    glBindTexture(GL_TEXTURE_2D, textureName);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
-
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    return textureName;
-}
-
-void initializeTexture() {
-    time_t t;
-    int dayTime;
-    srand((unsigned) time(&t));
-
-    dayTime = (rand() % 3);
-    printf("Daytime number: %d\n", dayTime);
-
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-    world.ground = loadTexture("textures/ground_summer.png");
-    world.garden = loadTexture("textures/garden.png");
-    world.helpMenu = loadTexture("textures/helpMenu.png");
-    world.tree.trunkTexture = loadTexture("textures/trunk.png");
-    world.tree.leafTexture = loadTexture("textures/leaf_summer.png");
-
-    switch(dayTime) {
-        case 0:
-            world.skybox.back = loadTexture("textures/skybox/nightbox3_back.png");
-            world.skybox.front = loadTexture("textures/skybox/nightbox3_front.png");
-            world.skybox.left = loadTexture("textures/skybox/nightbox3_left.png");
-            world.skybox.right = loadTexture("textures/skybox/nightbox3_right.png");
-            world.skybox.top = loadTexture("textures/skybox/nightbox3_top.png");
-
-            world.globalAmbient[0] = 0.3;
-            world.globalAmbient[1] = 0.3;
-            world.globalAmbient[2] = 0.3;
-            glLightModelfv(GL_LIGHT_MODEL_AMBIENT, world.globalAmbient);
-            break;
-        case 1:
-            world.skybox.back = loadTexture("textures/skybox/skybox1_back.png");
-            world.skybox.front = loadTexture("textures/skybox/skybox1_front.png");
-            world.skybox.left = loadTexture("textures/skybox/skybox1_left.png");
-            world.skybox.right = loadTexture("textures/skybox/skybox1_right.png");
-            world.skybox.top = loadTexture("textures/skybox/skybox1_top.png");
-
-            world.globalAmbient[0] = 0.6;
-            world.globalAmbient[1] = 0.6;
-            world.globalAmbient[2] = 0.6;
-            glLightModelfv(GL_LIGHT_MODEL_AMBIENT, world.globalAmbient);
-            break;
-        case 2:
-            world.skybox.back = loadTexture("textures/skybox/skybox2_back.png");
-            world.skybox.front = loadTexture("textures/skybox/skybox2_front.png");
-            world.skybox.left = loadTexture("textures/skybox/skybox2_left.png");
-            world.skybox.right = loadTexture("textures/skybox/skybox2_right.png");
-            world.skybox.top = loadTexture("textures/skybox/skybox2_top.png");
-
-            world.globalAmbient[0] = 1.0;
-            world.globalAmbient[1] = 1.0;
-            world.globalAmbient[2] = 1.0;
-            glLightModelfv(GL_LIGHT_MODEL_AMBIENT, world.globalAmbient);
-            break;
-        default:
-            world.skybox.back = loadTexture("textures/skybox/skybox2_back.png");
-            world.skybox.front = loadTexture("textures/skybox/skybox2_front.png");
-            world.skybox.left = loadTexture("textures/skybox/skybox2_left.png");
-            world.skybox.right = loadTexture("textures/skybox/skybox2_right.png");
-            world.skybox.top = loadTexture("textures/skybox/skybox2_top.png");
-            break;
-    }
-    world.house.texture = loadTexture("textures/house.png");
-
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-}
 
 //// START key and mouse handler functions
 void updateCameraPosition(struct Camera* camera, double elapsedTime){
@@ -202,6 +112,7 @@ void motionHandler(int x, int y) {
 }
 
 void keyHandler(unsigned char key, int x, int y) {
+    printf("Camera position: x=%lf, y=%lf, z=%lf\n", camera.position.x, camera.position.y, camera.position.z);
     switch (key){
         case 'w':
             action.moveForward = TRUE;
@@ -277,6 +188,7 @@ void keyUpHandler(unsigned char key, int x, int y) {
 }
 
 void specialFunc(int key, int x, int y) {
+    printf("spec funct;\n");
     switch (key) {
         case GLUT_KEY_F1:
             if (action.helpOpen) {
@@ -291,6 +203,7 @@ void specialFunc(int key, int x, int y) {
                 glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ones);
                 glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ones);
             }
+            break;
     }
 }
 //// END key and mouse handler functions
@@ -361,7 +274,7 @@ void display(){
 
         reshape(WINDOW_WIDTH, WINDOW_HEIGHT);
 
-        drawWorld(world);
+        drawWorld();
 
         glutSwapBuffers();
     } else {
@@ -486,7 +399,7 @@ void initialize() {
 
     initializeAllTreeCoords();
 
-    loadModel("models/house.obj", &world.house.model);
+    loadModel("src/models/house.obj", &world.house.model);
     // TODO x, y, z scales
     scaleModel(&world.house.model, 13.0, -5.0, 19.248);
     printBoundingBox(&world.house.model);
@@ -504,7 +417,7 @@ int main(int argc, char* argv[]) {
     glutInitWindowSize(1024, 568);
     glutInitWindowPosition(100, 50);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
-    int window = glutCreateWindow("GLUT Window");
+    int window = glutCreateWindow("Roam in the forest");
     glutSetWindow(window);
 
     initialize();

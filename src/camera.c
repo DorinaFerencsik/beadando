@@ -1,4 +1,4 @@
-#include "camera.h"
+#include "../includes/camera.h"
 
 #include <GL/glut.h>
 #include <math.h>
@@ -83,6 +83,9 @@ void moveUp(struct Camera* camera, double distance) {
 
 void moveDown(struct Camera* camera, double distance) {
 //    double angle = degreeToRadian(camera->pose.z);
-    camera->position.z -= distance;
+    if(camera->position.z > 2) {
+        camera->position.z -= distance;
+    }
+
 }
 //// END camera moving functions

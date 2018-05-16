@@ -14,6 +14,10 @@
 #define GL_EXT_CLAMP_TO_EDGE                 0x812F
 #endif
 
+World world;
+
+typedef GLubyte Pixel;
+
 /**
  * FUNCTIONS
  */
@@ -51,14 +55,17 @@ void drawSkyboxTop(int texture);
 void drawSkybox(Skybox skybox);
 
 //// Draw house model
-void drawHouse(World world);
+void drawHouse();
 
 //// Draw a given model
 void drawModel(const struct Model* model);
 
 //// Draw all the world elements and models
-void drawWorld(struct World world);
+void drawWorld();
 
 //// Initialize all the tree coords
 void initializeAllTreeCoords();
+
+//// Initialize textures
+void initializeTexture();
 #endif
