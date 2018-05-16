@@ -1,4 +1,5 @@
 #include "../includes/camera.h"
+#include "../includes/draw.h"
 
 #include <GL/glut.h>
 #include <math.h>
@@ -50,40 +51,54 @@ void rotateCamera(struct Camera* camera, double horizontal, double vertical) {
 //// START camera moving functions
 void moveForward(struct Camera* camera, double distance) {
     double angle = degreeToRadian(camera->pose.z);
+    if (camera->position.x > -SKYBOX_WIDHT+0.5 && camera->position.y > -SKYBOX_WIDHT+0.5 && camera->position.x < SKYBOX_WIDHT-0.5 && camera->position.y < SKYBOX_WIDHT-0.5) {
+        camera->position.x += cos(angle) * distance;
+        camera->position.y += sin(angle) * distance;
+    } else {
+        camera->position.x -= cos(angle) * distance;
+        camera->position.y -= sin(angle) * distance;
+    }
 
-    camera->position.x += cos(angle) * distance;
-    camera->position.y += sin(angle) * distance;
 }
 
 void moveBackward(struct Camera* camera, double distance) {
     double angle = degreeToRadian(camera->pose.z);
-
-    camera->position.x -= cos(angle) * distance;
-    camera->position.y -= sin(angle) * distance;
+    if (camera->position.x > -SKYBOX_WIDHT+0.3 && camera->position.y > -SKYBOX_WIDHT+0.3 && camera->position.x < SKYBOX_WIDHT-0.3 && camera->position.y < SKYBOX_WIDHT-0.3) {
+        camera->position.x -= cos(angle) * distance;
+        camera->position.y -= sin(angle) * distance;
+    }
 }
 
 void moveLeft(struct Camera* camera, double distance) {
     double angle = degreeToRadian(camera->pose.z + 90);
-
-    camera->position.x += cos(angle) * distance;
-    camera->position.y += sin(angle) * distance;
+    if (camera->position.x > -SKYBOX_WIDHT+0.5 && camera->position.y > -SKYBOX_WIDHT+0.5 && camera->position.x < SKYBOX_WIDHT-0.5 && camera->position.y < SKYBOX_WIDHT-0.5) {
+        camera->position.x += cos(angle) * distance;
+        camera->position.y += sin(angle) * distance;
+    } else {
+        camera->position.x -= cos(angle) * distance;
+        camera->position.y -= sin(angle) * distance;
+    }
 }
 
 void moveRight(struct Camera* camera, double distance) {
     double angle = degreeToRadian(camera->pose.z - 90);
-
-    camera->position.x += cos(angle) * distance;
-    camera->position.y += sin(angle) * distance;
+    if (camera->position.x > -SKYBOX_WIDHT+0.5 && camera->position.y > -SKYBOX_WIDHT+0.5 && camera->position.x < SKYBOX_WIDHT-0.5 && camera->position.y < SKYBOX_WIDHT-0.5) {
+        camera->position.x += cos(angle) * distance;
+        camera->position.y += sin(angle) * distance;
+    } else {
+        camera->position.x -= cos(angle) * distance;
+        camera->position.y -= sin(angle) * distance;
+    }
 }
 
 void moveUp(struct Camera* camera, double distance) {
-//    double angle = degreeToRadian(camera->pose.z);
-    camera->position.z += distance;
+    if (camera->position.z < SKYBOX_HEIGHT-1) {
+        camera->position.z += distance;
+    }
 }
 
 void moveDown(struct Camera* camera, double distance) {
-//    double angle = degreeToRadian(camera->pose.z);
-    if(camera->position.z > 2) {
+    if(camera->position.z > 2.2) {
         camera->position.z -= distance;
     }
 
